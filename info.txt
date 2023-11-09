@@ -1,0 +1,205 @@
+Tool Name: MetadataFieldScript
+Author: Boris Shvidchenko
+Created: 05/20/2021
+Version: 1.0
+
+MetadataFieldScript is a tool that takes a feature and updates its metadata so that the fields are displayed
+in the correct order (the same order in which they appear in the feature's attribute table). The script uses arcpy
+and xml.etree.ElementTree to function, and is divided into multiple sections that contribute to a specific
+process within the tool. These sections, alongside all variables in the script, are described below. 
+
+Note: Due to the nature of working with xml files (the native exported format for ArcPro metadata), and their
+      tendency to be non-uniform, automating the entire metadata update process proved to be difficult. As such,
+      errors may occur on an individual basis depending on the features that are used. It is recommended to check
+      the metadata afterwards and make corrections to any minor errors that might've occured by using 'Edit Metadata'
+      in ArcPro. 
+
+Description of sections included in the script:
+
+     These sections are commented out, and are formatted as follows: # === *SectionName* === 
+     
+     Elements that are obtained from the metadata xml file (such as 'udom', 'rdom', 'attrlabl', etc.) contain various types      
+     of metadata information. Examples include labels, description sources, values, etc.
+
+     1. OBTAINS THE WORKSPACE LOCATION (GDB) 
+	
+	     User selects a geodatabase, where the features that will be used are located, for the tool.
+
+     2. OBTAINS THE FEATURE
+
+	     User selects the feature. 
+
+     3. OBTAINS THE FEATURE METADATA AS XML
+	
+	     Extracts the feature's metadata as an xml file.
+
+     4. CREATES ORDERED LIST OF FIELDS FROM THE FEATURE
+
+  	     Extracts the field names from the feature, these are used as references to ensure correct order 
+	     in the metadata placement.   
+
+     5. OPENS AND EXTRACTS DATA FROM XML FILE
+
+	     Opens up the xml metadata file and extracts the sections that house the feature field information.  
+
+     6. ORGANIZES ATTRIBUTE DATA INTO CORRECT ORDER
+
+     	     Takes the extracted feature field information and re-organizes it so that the fields are ordered correctly,
+	     in the same way in which they appear in the feature's attribute table.
+
+     7. UPDATES, "ATTRLABL", LABEL IN XML FILE
+
+	     Updates metadata field labels.
+
+     8. UPDATES, "ATTRDEF", DEFINITION IN XML FILE
+
+	     Updates metadata descriptions.
+
+     9. UPDATES, "ATTRDEFS", DESCRIPTION SOURCE IN XML FILE
+
+	     Updates metadata description sorces.
+
+     10. FINDS AND STORES ALL UDOM ELEMENTS IN LIST
+
+	     Finds all metadata 'udom' elements, stores them in a list for later use.
+
+     11. FINDS AND STORES ALL EDOM ELEMENTS IN LIST
+
+	     Finds all metadata 'edom' elements, stores them in a list for later use.
+
+     12. FINDS AND STORES ALL EDOMV ELEMENTS IN LIST
+
+	     Finds all metadata 'edomv' elements, stores them in a list for later use.
+
+     13. FINDS AND STORES ALL EDOMVD ELEMENTS IN LIST
+
+	     Finds all metadata 'edomvd' elements, stores them in a list for later use.
+
+     14. FINDS AND STORES ALL EDOMVDS ELEMENTS IN LIST
+
+	     Finds all metadata 'edomvds' elements, stores them in a list for later use.
+
+     15. FINDS AND STORES ALL RDOM ELEMENTS IN LIST
+
+	     Finds all metadata 'rdom' elements, stores them in a list for later use.
+
+     16. FINDS AND STORES ALL RDOMMIN ELEMENTS IN LIST
+
+	     Finds all metadata 'rdommin' elements, stores them in a list for later use.
+
+     17. FINDS AND STORES ALL RDOMMAX ELEMENTS IN LIST
+
+	     Finds all metadata 'rdommax' elements, stores them in a list for later use.
+
+     18. FINDS AND STORES ALL ATTRUNIT ELEMENTS IN LIST
+
+	     Finds all metadata 'attrunit' elements, stores them in a list for later use.
+
+     19. FINDS AND STORES ALL ATTRMRES ELEMENTS IN LIST
+
+	     Finds all metadata 'attrmres' elements, stores them in a list for later use.
+
+     20. CHECKS IF "ATTRDOMV" EXISTS IN ELEMENT, UPDATES XML IF IT DOES
+
+	     Checks each element 'group' in the feature metadata and tries to identify if a 'attrdomv' element exists.
+	     This element is the parent for other subelements such as 'udom' and 'rdommax'. XML file is updated if it 
+ 	     does in fact exist.	     
+
+     21. CREATES AND UPDATES "UDOM" IN "ATTRDOMV" IN XML FILE
+
+	     Creates and updates a 'udom' element.
+
+     22. CREATES AND UPDATES "EDOM" IN "ATTRDOMV" IN XML FILE
+
+	     Creates and updates a 'edom' element.
+
+     23. CREATES AND UPDATES "RDOM" IN "ATTRDOMV" IN XML FILE
+
+	     Creates and updates an 'rdom' element.
+
+     24. CREATES AND UPDATES "EDOMV" IN "EDOM" IN XML FILE
+
+	     Creates and updates an 'edomv' element.
+
+     25. CREATES AND UPDATES "EDOMVD" IN "EDOM" IN XML FILE
+
+	     Creates and updates an 'edomvd' element.
+
+     26. CREATES AND UPDATES "EDOMVDS" IN "EDOM" IN XML FILE
+
+	     Creates and updates an 'edomvds' element.
+
+     27. CREATES AND UPDATES "RDOMMIN" IN "RDOM" IN XML FILE
+
+	     Creates and updates an 'rdommin' element.
+
+     28. CREATES AND UPDATES "RDOMMAX" IN "RDOM" IN XML FILE
+
+	     Creates and updates an 'rdommax' element.
+
+     29. CREATES AND UPDATES "ATTRUNIT" IN "RDOM" IN XML FILE
+
+	     Creates and updates an 'attrunit' element.
+
+     30. CREATES AND UPDATES "ATTRMRES" IN "RDOM" IN XML FILE
+
+	     Creates and updates an 'attrmres' element.
+
+     31. WRITES A NEW, UPDATED, XML FILE
+
+	     Creates a new xml metadata file, based on the changes made to the original metadata file.
+
+     32. UPDATES FEATURE WITH NEW XML FILE
+  
+	     Uses the new updated xml metadata file, and updates/saves the features metadata. 
+
+Description of variables included in the script:  
+
+     Note that not all variable have been included.
+
+     gdb = geodatabase selected by the user.
+     feature = feature selected by the user.
+     feature_split = if a feature is from an enterprise gdb, a function splits the feature by '.SDE.' in order to
+	             obtain the name of the feature in isolation. This variable represents a list.
+     feature_short_name = the feature name without the path.
+     feature_metadata = the metadata of the selected feature.
+     feature_md_name = the new name to be used for the metadata xml file.
+     feature_md_short_name = a shorter version of feature_md_name, used in saving the updated xml file. 
+     temp = temporary variable to store specific data/information.
+     counter = temporary variable to store a counter for parsing.     
+     field_list = stores the names of all feature fields in the correct order.
+     tree = the feature's metadata xml file, parsed by section.
+     root = the root of the feature's metadata xml file.
+     metadata_field_list = stores all metadata elements.
+     final_metadata_field_list = stores all metadata elements in the correct order.
+     attr_list/sub_list* = temporary list to store an element and associated field name. *Sub lists may have multiple names.
+     field_name = name of the field.
+     label_list = stores all metadata label elements.
+     attrlabl = metadata label element.
+     attrdef = metadata definition element.
+     attrdefs = metadata definition source element.
+     attrdomv = metadata 'attrdomv' element.
+     attrudom = metadata 'udom' element.
+     domv_edom = metadata 'edom' element.
+     domv_edomv = metadata 'edomv' element.
+     domv_edomvd = metadata 'edomvd' element.
+     domv_edomvds = metadata 'edomvds' element.
+     domv_rdom = metadata 'rdom' element.
+     domv_rdommin = metadata 'rdommin' element.
+     domv_rdommax = metadata 'rdommax' element.
+     domv_attrunit = metadata 'attrunit' element.
+     domv_attrmres = metadata 'attrmres' element.     
+     def_list = stores all metadata definition elements.
+     source_list = stores all metadata definition source elements.
+     domv_list = stores all metadata 'attrdomv' elements.
+     udom_list = stores all metadata 'udom' elements.
+     edom_list = stores all metadata 'edom' elements.
+     edomv_list = stores all metadata 'edomv' elements.  
+     edomvd_list = stores all metadata 'edomvd' elements.
+     edomvds_list = stores all metadata 'edomvds' elements.
+     rdom_list = stores all metadata 'rdom' elements.
+     rdommin_list = stores all metadata 'rdommin' elements.
+     rdommax_list = stores all metadata 'rdommax' elements.
+     attrunit_list = stores all metadata 'attrunit' elements.
+     attrmres_list = stores all metadata 'attrunit' elements.
+     updated_xml_file = final updated metadata xml file name. 
